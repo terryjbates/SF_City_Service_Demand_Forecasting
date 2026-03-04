@@ -21,7 +21,7 @@ Forecasting San Francisco 311 / 911 safety-related service demand at the neighbo
 ![Top 5 City Event Categories](./images/Top_5_City_Events_Cats.png)
 City services routinely need to respond to safety events which range from disturbances, including noise, illegal parking, graffiti, and curb problems. This project will predict the number of different types of [311 events in San Francisco](https://www.sf.gov/departments--311-customer-service-center) per neighborhood and for a given date, based on historical data. Accurate models will help ensure that enough customer service agents and resources are available and able to respond promptly to these requests.
 
-Our dataset is based on San Francisco 311 service call data ranging from 2016 to 2020. We develop and evaluate time-aware regression models to forecast aggregated San Francisco 311 safety-related service demand at the neighborhood level. These models assess whether historical call data, combined with temporal, weather, holiday, and operational schedule features, can produce reliable short-horizon demand forecasts suitable for planning and resource allocation. Forecasting is performed at a fixed 6-hour interval across selected neighborhoods and service categories.
+Our dataset is based on [San Francisco 311 and 911 service call data ranging from 2016 to 2020](./data/parquet_files/). We develop and evaluate time-aware regression models to forecast aggregated San Francisco 311/911 safety-related service demand at the neighborhood level. These models assess whether historical call data, combined with temporal, weather, holiday, and operational schedule features, can produce reliable short-horizon demand forecasts suitable for planning and resource allocation. Forecasting is performed at a fixed 6-hour interval across selected neighborhoods and service categories.
 
 ![HGBR Permutation Importance](./images/HGBR_Permutation_Importance.png)
 ---
@@ -70,8 +70,8 @@ For each service category we:
 2. Aggregate counts by: 
     1. Neighborhood
     2. Six-hour interval
-3. Construct a complete neighborhood × time grid
-4. Fill missing time intervals with zero counts to ensure consistent time indexing and avoid missing data
+3. Construct a complete neighborhood and time grid
+4. Fill the missing time intervals with zeroes to ensure consistent time indexing and avoid missing data
 
 
 #### Temporal Features
@@ -146,17 +146,17 @@ HistGradientBoostingRegressor|test|[69.56602151861375]|5.103549|63.317243|0.7650
 ||train|[6.25695021727461]|1.549894|25.822132|0.803756|Encampments
 ||train|[3.498557470861499]|1.443707|21.506621|0.459301|Non Life-threatening?
 
-The baseline model predicts the historical mean, producing high errors with negative or near-zero R² across categories. The tuned HGBR model substantially lowers RMSE and MAE on the test set and produces consistently positive R² values. For example, `Street and Sidewalk Cleaning` test RMSE drops from about **316** under the baseline to about **70** with HGBR, with R² improving from negative to **0.77**. Similar improvements appear across all categories, indicating that the gradient boosting model captures meaningful temporal and contextual structure that the baseline cannot.
+The baseline model simplistically predicts the historical mean, producing high errors with negative or near-zero R² across categories. The tuned HGBR model substantially lowers RMSE and MAE on the test set and produces consistently positive R² values. For example, `Street and Sidewalk Cleaning` test RMSE drops from about **316** under the baseline to about **70** with HGBR, with R² improving from negative to **0.77**. Similar improvements appear across all categories, indicating that the gradient boosting model captures meaningful temporal and contextual structure.
 
 * **Service demand generally followed predictable temporal cycles**, particularly by hour of day and day of week. Service calls had their highest volume, regardless of category, around 9:00 AM and on Monday, following traditional business hours.
 
 ![Hour of the Day Plot](./images/Hour_of_the_Day.png)
 
-* **Mobile/Open311 was the predominant source of events**, with Phone or Web events being distant second or third in volume. Events such as COVID-19 and its associated lockdowns mean the city loses significant amounts of crowdsourced monitoring capacity. At the same time, lessened monitoring does not mean that the underlying facts on the ground reduced or increased in volume. 
+* **Mobile/Open311 was the predominant source of events**, with Phone or Web events being distant second (or third) in volume. Events such as COVID-19 and its associated lockdowns mean the city loses significant amounts of crowdsourced monitoring capacity. At the same time, lessened monitoring does not mean that the underlying facts on the ground reduced or increased in volume. 
  
 ![City Event Source Distro](./images/City_Event_Source_Distro.png)
 
-The "Uknown" nature of `Potentially Life-Threatening` and `Non Life-Threatening` points to systemic encoding issue; events of this nature imply threat to human life and limb, while the other categories seems based on non-urgent events.
+The "Unknown" nature of `Potentially Life-Threatening` and `Non Life-Threatening` points to systemic encoding issue; events of this nature imply threat to human life and limb, while the other categories seems based on non-urgent events.
 
 * **Forecast accuracy varies by neighborhood**, highlighting the need for neighborhood-level, localized, model evaluations instead of generalization based on city-wide metrics. The heterogenous nature of our model predictions within different event categoires imply features unexplored, such as employment type, foot and vehicle traffic patterns, and property types, all of which could impact the volume and classification of reporting.
 * **Applied to 2020 data, models trained on earlier years exhibited concept drift.** After COVID-19 lockdown events, predicted and observed counts for city events diverged in interesting ways. For example, in the `SoMA` district the predicted number of `Street and Sidewalk Cleaning` events steadily rose, while the actual number observed dropped significantly and flattened. Lockdown events combined with work-from-home company policies may have reduced the number of people available to observe and report city events for category.
